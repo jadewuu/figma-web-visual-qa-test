@@ -1,0 +1,30 @@
+targets:
+  - id: orders-list
+    figma:
+      fileKey: abc123
+      nodeId: "10:20"
+    previewUrl: https://preview.example.test/orders
+    viewport:
+      width: 1440
+      height: 1024
+    readinessSelector: "[data-qa-ready='orders-list']"
+    tokenSource:
+      kind: file
+      path: tests/fixtures/design-tokens.json
+    sourceGlobs:
+      - src/**/*.css
+      - src/**/*.tsx
+      - src/**/*.vue
+  - id: invalid-target
+    figma:
+      fileKey: abc123
+      nodeId: ""
+    previewUrl: https://preview.example.test/invalid
+    viewport:
+      width: 1440
+      height: 1024
+    readinessSelector: "[data-qa-ready='invalid']"
+    tokenSource:
+      kind: figma
+    sourceGlobs:
+      - src/**/*.css

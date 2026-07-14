@@ -1,0 +1,17 @@
+targets:
+  - id: orders-list
+    figma:
+      fileKey: "replace-with-figma-file-key"
+      nodeId: "10:20"
+    previewUrl: "https://preview.example.test/orders"
+    viewport:
+      width: 1440
+      height: 1024
+      deviceScaleFactor: 1
+    readinessSelector: "[data-qa-ready='orders-list']"
+    tokenSource:
+      kind: figma
+    sourceGlobs:
+      - "src/**/*.css"
+      - "src/**/*.tsx"
+      - "src/**/*.vue"

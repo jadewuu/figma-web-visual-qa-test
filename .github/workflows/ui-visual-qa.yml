@@ -1,0 +1,37 @@
+name: UI Visual QA
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ui-visual-qa:
+    runs-on: ubuntu-latest
+    env:
+      FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_ACCESS_TOKEN }}
+      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+      QA_TARGET: ${{ vars.QA_TARGET }}
+      GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run qa -- "$QA_TARGET"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-visual-qa
+          path: artifacts/ui-visual-qa/
+          if-no-files-found: warn
