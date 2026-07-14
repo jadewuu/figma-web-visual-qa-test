@@ -22,7 +22,7 @@
 
 | 类型 | 名称 | 值 |
 |---|---|---|
-| Repository secret | `FIGMA_ACCESS_TOKEN` | 有权读取目标文件和 Variables 的 Figma token |
+| Repository secret | `FIGMA_ACCESS_TOKEN` | 有权读取目标文件的 Figma token；Variables API 仅 Enterprise 可用，个人账号会自动回退到 Frame 颜色提取 |
 | Repository secret | `DASHSCOPE_API_KEY` | 阿里云百炼 API Key |
 | Repository variable | `QA_TARGET` | `qa-targets.yml` 中目标的 `id`，例如 `orders-list` |
 

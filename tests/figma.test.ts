@@ -67,6 +67,28 @@ describe("Figma inputs", () => {
     await expect(loadDesignTokens({ ...target, tokenSource: { kind: "figma" } }))
       .resolves.toEqual({ "color.brand-primary.1:0": "#1677ff" });
   });
+
+  it("Variables 无访问权限时，从配置 Frame 提取颜色作为 Token 基线", async () => {
+    process.env.FIGMA_ACCESS_TOKEN = "test-token";
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(new Response("forbidden", { status: 403 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        nodes: {
+          "10:20": {
+            document: {
+              fills: [{ color: { r: 0.1, g: 0.2, b: 0.3, a: 1 } }],
+              children: [{ strokes: [{ color: { r: 1, g: 1, b: 1, a: 1 } }] }],
+            },
+          },
+        },
+      }), { status: 200 })));
+
+    await expect(loadDesignTokens({ ...target, tokenSource: { kind: "figma" } }))
+      .resolves.toEqual({
+        "figma-node.color.1": "#1a334d",
+        "figma-node.color.2": "#ffffff",
+      });
+  });
 });
 
 describe("readMergeRequestDiff", () => {

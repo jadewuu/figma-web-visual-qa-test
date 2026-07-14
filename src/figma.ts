@@ -37,6 +37,51 @@ function normalizeValue(value: unknown): string | undefined {
   return undefined;
 }
 
+function extractFrameColors(value: unknown, tokens: Record<string, string>): void {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      extractFrameColors(item, tokens);
+    }
+    return;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return;
+  }
+
+  const record = value as Record<string, unknown>;
+  const color = normalizeValue(record.color);
+  if (color && !Object.values(tokens).includes(color)) {
+    tokens[`figma-node.color.${Object.keys(tokens).length + 1}`] = color;
+  }
+
+  for (const child of Object.values(record)) {
+    extractFrameColors(child, tokens);
+  }
+}
+
+async function loadFrameColorTokens(target: QaTarget): Promise<Record<string, string>> {
+  const response = await fetch(
+    `${figmaApi}/files/${target.figma.fileKey}/nodes?ids=${encodeURIComponent(target.figma.nodeId)}`,
+    { headers: headers() }
+  );
+  if (!response.ok) {
+    throw new Error(`Figma node request failed: ${response.status}`);
+  }
+
+  const body = await response.json() as {
+    nodes: Record<string, { document?: unknown }>;
+  };
+  const document = body.nodes[target.figma.nodeId]?.document;
+  if (!document) {
+    throw new Error("Figma did not return the configured node document");
+  }
+
+  const tokens: Record<string, string> = {};
+  extractFrameColors(document, tokens);
+  return tokens;
+}
+
 export async function exportFigmaFrame(
   target: QaTarget,
   outputPath: string
@@ -78,6 +123,10 @@ export async function loadDesignTokens(
     { headers: headers() }
   );
   if (!response.ok) {
+    if (response.status === 403) {
+      console.warn("Figma Variables API returned 403; using configured Frame colors for token QA.");
+      return loadFrameColorTokens(target);
+    }
     throw new Error(`Figma variables request failed: ${response.status}`);
   }
 
