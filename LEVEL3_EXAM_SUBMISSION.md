@@ -1,47 +1,91 @@
-# Level 3 Agent 申报内容（可直接提交）
+# Level 3 - Craft：Agent 构建申报内容
 
-## Agent 名称
+> 提交时可直接复制本文件对应章节。链接均指向本次真实运行，不含任何密钥。
 
-Figma Design System & Web Visual QA Agent
+## 一、基本资料与依赖检查
 
-## 解决的问题
+### Agent 官方名称
 
-前端页面在 Pull Request 中容易出现设计稿还原偏差，也可能新增未纳入设计系统的颜色、间距和圆角。人工需要反复从 Figma、预览环境和代码 Diff 中取数、截图、比对和回写结论，效率低且标准不稳定。
+**Figma 设计稿与 Web 视觉 QA Agent**
 
-## 复用的 Level 2 Skill
+### 依赖的 Level 2 原始 Skill
 
-复用 `ui-visual-qa.skill` 的核心 AI 能力：将 Figma 设计截图与 Web 实现截图进行视觉比对，忽略文案、数字和照片内容差异，重点识别布局、尺寸、间距、颜色、字体、圆角、边框、阴影、对齐和图标风格问题，并输出 P0/P1/P2 与标注图。
+`ui-visual-qa.skill`（随本仓库提交/上传）。
 
-Level 3 没有替代该视觉能力；在它之外新增了 Figma Variables 与 Git Diff 的设计 Token 检查，作为代码层补充。
+本 Agent 复用该 Level 2 Skill 的核心能力：将 Figma 设计图与 Web 实现截图交给视觉模型比对，忽略文案、数字、照片内容差异，重点识别布局、尺寸、间距、颜色、字体、圆角、边框、阴影、对齐和图标风格问题，并输出 P0/P1/P2 和标注图。
 
-## 自动化触发与流程
+### Level 2 到 Level 3 的演进
 
-触发条件：GitHub Actions 的 `pull_request` 事件（创建、更新、重新打开 PR）。
+| 维度 | Level 2：手动使用 Skill | Level 3：无人值守 Agent |
+|---|---|---|
+| 触发方式 | 人工复制 Figma/页面截图后手动运行 | GitHub Pull Request 创建、更新或重新打开时自动触发 |
+| 数据取得 | 人工准备两张截图 | Figma API 自动导出指定 Frame；Playwright 自动截取 Preview；自动读取 PR Diff |
+| AI 处理 | 手动把图片交给视觉 QA Skill | 自动调用 `qwen3-vl-235b-a22b-thinking`，按 L2 规则返回结构化问题 |
+| 输出与分支 | 人工判断并写回 | P0 阻止合并；P1/P2 留下报告供复核；自动评论 PR 并上传 Artifact |
 
-1. 自动读取 `qa-targets.yml`，从 Figma API 导出指定 Frame 的设计图，并读取 Figma Variables（或本地 design-tokens.json）。
-2. 自动读取当前 GitHub PR Diff，检查新增代码中未匹配设计 Token 的硬编码颜色和间距。
-3. 自动打开 Preview URL，等待 `readinessSelector` 可见后用 Playwright 截取 Web 实现图。
-4. 调用 `qwen3-vl-235b-a22b-thinking`，比较设计图和实现图，输出带实现截图像素坐标的视觉问题。
-5. 自动生成 `annotated.png`、HTML/Markdown 报告、`findings.json` 与 `run-log.json`，发布 GitHub PR 评论，并上传为 GitHub Artifact。
+## 二、Agent 架构设计说明
 
-## 模型与输入输出
+### 自动触发机制（Trigger）
 
-- 模型：`qwen3-vl-235b-a22b-thinking`。
-- 输入：Figma Frame PNG、Web Preview PNG、Figma Variables/本地 Token、GitHub PR Diff。
-- 模型输出：仅解析最终 `content` 中的 JSON；不保存或解析 `reasoning_content`。
-- 输出位置：GitHub PR 评论和 `artifacts/ui-visual-qa/`。
+当 GitHub 仓库发生 `pull_request` 的 `opened`、`synchronize` 或 `reopened` 事件时，GitHub Actions 自动启动 `UI Visual QA` 工作流。运行目标由仓库 Variable `QA_TARGET` 指定；本次为 `rewards-self-service-home`。
 
-## 分支与异常处理
+### 多步骤自主工作流（Workflow）
 
-- 发现 P0：QA Job 失败，阻止合并并在 PR 评论标明问题。
-- 仅 P1/P2 或无问题：QA Job 成功，仍附报告供人工复核。
-- Figma、Preview、模型或网络异常：每个外部步骤最多重试 3 次；仍失败时写入 `needs-human-review`、保留完整日志和可下载 Artifact。
-- GitHub PR 评论发布失败：不丢弃本地报告或日志，最终仍返回 `needs-human-review`。
+1. **自动获取设计输入**：读取 `qa-targets.yml`，从 Figma 导出 GreenBite Rewards Landing Page 的 Frame `5:625`。优先读取 Figma Variables；若个人账号受 Variables API 权限限制，则自动从同一 Frame 提取实际颜色作为 Token 基线。
+2. **代码层 Token QA**：读取当前 PR 的 Git Diff，检查新增硬编码颜色和间距是否匹配设计 Token/Frame 颜色基线。
+3. **自动获取实现输入**：Playwright 打开 `https://jadewuu.github.io/GreenBite/`，等待 `body` 可见后，在 `402 x 874` 视口截取页面。
+4. **复用 Level 2 AI 能力**：调用 `qwen3-vl-235b-a22b-thinking` 对比 Figma 图和 Web 图；只解析最终结构化结果，不保存模型推理内容。
+5. **判断分支与自动落地**：生成标注截图、HTML/Markdown 报告、问题 JSON、运行日志；自动发布 GitHub PR 评论，并上传 GitHub Artifact。
 
-## 考试展示证据
+### 判断分支
 
-1. `.github/workflows/ui-visual-qa.yml`：PR 自动触发规则、最小权限与 Artifact `if: always()`。
-2. `qa-targets.yml`：Figma Frame、Preview URL、选择器、Token 源和源代码范围。
-3. GitHub Actions Job 日志：`fetch_figma`、`code_token_qa`、`capture_web`、`visual_qa`、`publish`。
-4. GitHub PR 自动评论：严重度统计、设计图与标注后的实现图、问题表。
-5. Artifact：`report.html`、`annotated.png`、`findings.json`、`run-log.json`。
+- **P0**：工作流失败，阻止合并，并在 PR 评论中列出阻断问题。
+- **P1/P2 或无问题**：工作流成功，自动评论报告，供开发者复核。
+- **当前真实结果**：发现 1 条 P1，因此工作流成功但保留人工复核项。
+
+### 异常处理与降级机制
+
+- Figma、网页预览、模型或网络请求失败时，每个外部步骤最多重试 3 次。
+- 三次仍失败时，输出 `needs-human-review`、保存 `run-log.json`，并仍上传 Artifact。
+- PR 评论发布失败时，不丢弃报告与日志，最终状态改为 `needs-human-review`。
+- 本次首次运行识别到 Figma Variables API `403`。这是个人账号不能使用该 Enterprise 接口造成的；已实现“优先 Variables，403 时自动提取 Frame 颜色”的降级路径，后续运行成功完成。
+
+## 三、真实运行佐证材料
+
+### 运行入口
+
+- GitHub 仓库：<https://github.com/jadewuu/figma-web-visual-qa-test>
+- 演示 PR：<https://github.com/jadewuu/figma-web-visual-qa-test/pull/1>
+- 成功的 Actions Run：<https://github.com/jadewuu/figma-web-visual-qa-test/actions/runs/29358255679>
+
+### 成功日志（Step 1 至 Step 4）
+
+该 Run 已成功完成以下记录：
+
+1. `fetch_figma` - success
+2. `load_tokens` - success
+3. `code_token_qa` - success，0 findings（本演示 PR 只含文档变更）
+4. `capture_web` - success
+5. `visual_qa` - success
+6. `publish` - success，PR comment published; artifacts staged for GitHub upload
+
+### 最终自动落地结果
+
+GitHub Actions 已自动在 PR #1 发布验收报告，并上传 `ui-visual-qa` Artifact。真实识别结果：
+
+- 状态：`success`
+- 发现：P0 0 项、P1 1 项、P2 0 项
+- P1：`Bottom hint text` 的 “Take less than 30 seconds” 文案颜色相比设计稿偏深。
+
+Artifact 包含：`design.png`、`implementation.png`、`annotated.png`、`report.html`、`report.md`、`findings.json` 与 `run-log.json`。
+
+## 四、提交附件建议
+
+1. 本文件或填写后的申报表。
+2. `ui-visual-qa.skill` 原始 Level 2 Skill 文件。
+3. `.github/workflows/ui-visual-qa.yml` 的截图或代码片段（展示自动触发和 Artifact 上传）。
+4. 成功 Actions Run 的截图（所有 Job Step 为绿色）。
+5. PR 自动评论的截图。
+6. Artifact 中 `report.html` 或 `annotated.png` 的截图，以及 `run-log.json` 的截图。
+
+> 说明：GreenBite 的前端源码不在此测试仓库；因此本演示中代码 Token QA 流程已真实运行，但 Diff 中没有业务前端改动。视觉 QA、自动评论与产物均针对真实线上页面完成。
