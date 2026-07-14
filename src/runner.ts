@@ -41,22 +41,30 @@ export async function runQa(target: QaTarget, outputDir: string): Promise<QaRunR
     const status = decideStatus(findings);
     const markdown = await writeReport(outputDir, target.id, status, findings);
     await writeFile(join(outputDir, "findings.json"), JSON.stringify(findings, null, 2));
-    await postPullRequestComment(markdown);
-    log.add("publish", "success", 1, "PR comment published; artifacts staged for GitHub upload");
+    if (process.env.QA_DEFER_PR_COMMENT === "true") {
+      log.add("publish", "skipped", 1, "PR comment deferred until report images are published");
+    } else {
+      await postPullRequestComment(markdown);
+      log.add("publish", "success", 1, "PR comment published; artifacts staged for GitHub upload");
+    }
     await writeFile(join(outputDir, "run-log.json"), JSON.stringify(log.entries, null, 2));
     return { status, findings, log: log.entries };
   } catch (error) {
     log.add("runner", "failed", 1, error instanceof Error ? error.message : "unknown error");
     const markdown = await writeReport(outputDir, target.id, "needs-human-review", []);
-    try {
-      await postPullRequestComment(markdown);
-    } catch (noteError) {
-      log.add(
-        "publish",
-        "failed",
-        1,
-        noteError instanceof Error ? noteError.message : "unknown error",
-      );
+    if (process.env.QA_DEFER_PR_COMMENT === "true") {
+      log.add("publish", "skipped", 1, "PR comment deferred until report images are published");
+    } else {
+      try {
+        await postPullRequestComment(markdown);
+      } catch (noteError) {
+        log.add(
+          "publish",
+          "failed",
+          1,
+          noteError instanceof Error ? noteError.message : "unknown error",
+        );
+      }
     }
     await writeFile(join(outputDir, "run-log.json"), JSON.stringify(log.entries, null, 2));
     return { status: "needs-human-review", findings: [], log: log.entries };

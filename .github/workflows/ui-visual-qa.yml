@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -18,6 +18,8 @@ jobs:
       GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
       GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      QA_REPORT_BASE_URL: https://github.com/${{ github.repository }}/raw/refs/heads/qa-reports/pr-${{ github.event.pull_request.number }}/${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,6 +31,41 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run qa -- "$QA_TARGET"
+        env:
+          QA_DEFER_PR_COMMENT: "true"
+      - name: Publish QA report images
+        if: always()
+        run: |
+          report_dir="artifacts/ui-visual-qa"
+          [ -f "$report_dir/report.md" ] || exit 0
+          remote_url="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if ! git ls-remote --exit-code origin refs/heads/qa-reports >/dev/null 2>&1; then
+            seed_dir="$(mktemp -d)"
+            git init -q "$seed_dir"
+            git -C "$seed_dir" checkout -q --orphan qa-reports
+            git -C "$seed_dir" config user.name github-actions[bot]
+            git -C "$seed_dir" config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git -C "$seed_dir" commit --allow-empty -m "chore: initialize QA reports"
+            git -C "$seed_dir" remote add origin "$remote_url"
+            git -C "$seed_dir" push -q origin qa-reports
+          fi
+          publish_dir="$(mktemp -d)/qa-reports"
+          git clone -q --depth 1 --branch qa-reports "$remote_url" "$publish_dir"
+          target_dir="$publish_dir/pr-${PR_NUMBER}/${GITHUB_SHA}"
+          mkdir -p "$target_dir"
+          cp -R "$report_dir"/. "$target_dir"/
+          git -C "$publish_dir" config user.name github-actions[bot]
+          git -C "$publish_dir" config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git -C "$publish_dir" add "pr-${PR_NUMBER}/${GITHUB_SHA}"
+          git -C "$publish_dir" commit -m "chore: publish QA report for PR ${PR_NUMBER}"
+          git -C "$publish_dir" push -q origin qa-reports
+      - name: Publish QA report comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -f artifacts/ui-visual-qa/report.md ] || exit 0
+          gh pr comment "$PR_NUMBER" --body-file artifacts/ui-visual-qa/report.md
       - uses: actions/upload-artifact@v4
         if: always()
         with:
