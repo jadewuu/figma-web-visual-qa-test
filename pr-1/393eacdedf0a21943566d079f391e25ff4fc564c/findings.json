@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "severity": "P1",
+    "source": "visual",
+    "location": "标题区域",
+    "description": "标题 'From Every Visit' 行间距小于设计稿，'From Every' 与 'Visit' 之间垂直间距过小导致排版紧凑",
+    "bbox": [
+      47,
+      250,
+      623,
+      340
+    ]
+  },
+  {
+    "id": 2,
+    "severity": "P1",
+    "source": "visual",
+    "location": "Join Rewards 按钮",
+    "description": "Join Rewards 按钮圆角半径小于设计稿，实现中圆角更小导致视觉一致性偏差",
+    "bbox": [
+      50,
+      690,
+      945,
+      740
+    ]
+  }
+]
