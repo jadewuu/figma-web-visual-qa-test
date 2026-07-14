@@ -6,6 +6,11 @@ function count(findings: Finding[], severity: Finding["severity"]): number {
   return findings.filter((finding) => finding.severity === severity).length;
 }
 
+function reportFile(name: string): string {
+  const baseUrl = process.env.QA_REPORT_BASE_URL?.replace(/\/$/, "");
+  return baseUrl ? `${baseUrl}/${name}` : name;
+}
+
 export function decideStatus(findings: Finding[], forcedReview = false): RunStatus {
   if (forcedReview) return "needs-human-review";
   return findings.some((finding) => finding.severity === "P0") ? "failed" : "success";
@@ -28,9 +33,9 @@ export function renderMarkdown(
 
 **严重程度统计**: P0: ${count(findings, "P0")} 项 | P1: ${count(findings, "P1")} 项 | P2: ${count(findings, "P2")} 项
 
-<table><tr><td align="center"><b>设计稿</b></td><td align="center"><b>实现（已标注）</b></td></tr><tr><td><img src="design.png" width="480"></td><td><img src="annotated.png" width="480"></td></tr></table>
+<table><tr><td align="center"><b>设计稿</b></td><td align="center"><b>实现（已标注）</b></td></tr><tr><td><img src="${reportFile("design.png")}" width="480"></td><td><img src="${reportFile("annotated.png")}" width="480"></td></tr></table>
 
-[查看完整报告](report.html) | [实现原图](implementation.png)
+[查看完整报告](${reportFile("report.html")}) | [实现原图](${reportFile("implementation.png")})
 
 | 编号 | 严重程度 | 位置/组件 | 说明 |
 |---|---|---|---|

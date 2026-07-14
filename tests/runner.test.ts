@@ -29,7 +29,10 @@ const target: QaTarget = {
   sourceGlobs: ["src/**/*.css"],
 };
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  delete process.env.QA_DEFER_PR_COMMENT;
+});
 
 describe("runQa", () => {
   it("获取输入失败且 PR 评论发布失败时，仍输出 needs-human-review 与运行日志", async () => {
@@ -47,6 +50,21 @@ describe("runQa", () => {
         expect.objectContaining({ step: "runner", status: "failed" }),
       ]));
     expect(mocks.postPullRequestComment).toHaveBeenCalledOnce();
+    await rm(outputDir, { recursive: true, force: true });
+  });
+
+  it("工作流延后发布时，不由 Runner 提前发布 PR 评论", async () => {
+    process.env.QA_DEFER_PR_COMMENT = "true";
+    mocks.exportFigmaFrame.mockRejectedValue(new Error("Figma image request failed: 401"));
+    const outputDir = await mkdtemp(join(tmpdir(), "qa-runner-"));
+
+    await runQa(target, outputDir);
+
+    expect(mocks.postPullRequestComment).not.toHaveBeenCalled();
+    expect(JSON.parse(await readFile(join(outputDir, "run-log.json"), "utf8")))
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ step: "publish", status: "skipped" }),
+      ]));
     await rm(outputDir, { recursive: true, force: true });
   });
 });

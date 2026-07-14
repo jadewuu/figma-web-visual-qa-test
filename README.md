@@ -1,6 +1,6 @@
 # Figma Design System & Web Visual QA Agent
 
-用于 GitHub Pull Request 的自动 UI 验收 Agent：从 Figma 获取设计图和 Variables、截取 Web 预览图，调用 `qwen3-vl-235b-a22b-thinking` 进行视觉比对，并检查 PR Diff 中新增的硬编码颜色与间距。
+用于 GitHub Pull Request 的自动 UI 验收 Agent：从 Figma 获取设计图和设计 Token、截取 Web 预览图，调用 `qwen3-vl-235b-a22b-thinking` 进行视觉比对，并检查 PR Diff 中新增的硬编码颜色与间距。
 
 视觉比对是 Level 2 `ui-visual-qa.skill` 的核心能力；代码 Token 检查只是补充，不替代截图 QA。
 
@@ -8,7 +8,7 @@
 
 在仓库的 **Settings > Secrets and variables > Actions** 中创建：
 
-- Repository secrets：`FIGMA_ACCESS_TOKEN`（可读取目标 Figma 文件与 Variables）、`DASHSCOPE_API_KEY`。
+- Repository secrets：`FIGMA_ACCESS_TOKEN`（可读取目标 Figma 文件）、`DASHSCOPE_API_KEY`。
 - Repository variable：`QA_TARGET`（要运行的目标 ID，例如 `orders-list`）。
 - `GITHUB_TOKEN` 由 GitHub Actions 自动提供，用于发布 PR 评论；不要手工创建。
 
@@ -16,7 +16,7 @@
 
 ## 配置目标
 
-复制 `qa-targets.example.yml` 为 `qa-targets.yml`，填写真实 Figma file key、Frame node ID、预览 URL 和页面稳定后的选择器。若 Variables 尚未接入 Figma，可改为本地 JSON：
+复制 `qa-targets.example.yml` 为 `qa-targets.yml`，填写真实 Figma file key、Frame node ID、预览 URL 和页面稳定后的选择器。`kind: figma` 会优先读取 Variables；若 Figma 返回 403（Variables API 需要 Enterprise 全席位），会自动从同一 Frame 提取实际颜色作为 Token 基线。若需要固定的语义 Token，可改为本地 JSON：
 
 ```yaml
 tokenSource:
