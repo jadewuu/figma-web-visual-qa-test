@@ -1,0 +1,58 @@
+[
+  {
+    "step": "fetch_figma",
+    "status": "success",
+    "attempt": 1,
+    "message": "completed",
+    "timestamp": "2026-07-19T17:06:15.304Z"
+  },
+  {
+    "step": "load_tokens",
+    "status": "success",
+    "attempt": 1,
+    "message": "completed",
+    "timestamp": "2026-07-19T17:06:16.305Z"
+  },
+  {
+    "step": "code_token_qa",
+    "status": "success",
+    "attempt": 1,
+    "message": "0 findings",
+    "timestamp": "2026-07-19T17:06:16.310Z"
+  },
+  {
+    "step": "capture_web",
+    "status": "failed",
+    "attempt": 1,
+    "message": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-demo-missing]') to be visible\n",
+    "timestamp": "2026-07-19T17:06:33.382Z"
+  },
+  {
+    "step": "capture_web",
+    "status": "failed",
+    "attempt": 2,
+    "message": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-demo-missing]') to be visible\n",
+    "timestamp": "2026-07-19T17:06:49.641Z"
+  },
+  {
+    "step": "capture_web",
+    "status": "failed",
+    "attempt": 3,
+    "message": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-demo-missing]') to be visible\n",
+    "timestamp": "2026-07-19T17:07:06.080Z"
+  },
+  {
+    "step": "runner",
+    "status": "failed",
+    "attempt": 1,
+    "message": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-demo-missing]') to be visible\n",
+    "timestamp": "2026-07-19T17:07:06.080Z"
+  },
+  {
+    "step": "publish",
+    "status": "skipped",
+    "attempt": 1,
+    "message": "PR comment deferred until report images are published",
+    "timestamp": "2026-07-19T17:07:06.081Z"
+  }
+]
