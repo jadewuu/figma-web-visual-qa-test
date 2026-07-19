@@ -1,0 +1,44 @@
+[
+  {
+    "step": "fetch_figma",
+    "status": "success",
+    "attempt": 1,
+    "message": "completed",
+    "timestamp": "2026-07-19T17:00:31.700Z"
+  },
+  {
+    "step": "load_tokens",
+    "status": "success",
+    "attempt": 1,
+    "message": "completed",
+    "timestamp": "2026-07-19T17:00:32.757Z"
+  },
+  {
+    "step": "code_token_qa",
+    "status": "success",
+    "attempt": 1,
+    "message": "0 findings",
+    "timestamp": "2026-07-19T17:00:32.765Z"
+  },
+  {
+    "step": "capture_web",
+    "status": "success",
+    "attempt": 1,
+    "message": "completed",
+    "timestamp": "2026-07-19T17:00:35.477Z"
+  },
+  {
+    "step": "visual_qa",
+    "status": "success",
+    "attempt": 1,
+    "message": "completed",
+    "timestamp": "2026-07-19T17:03:30.935Z"
+  },
+  {
+    "step": "publish",
+    "status": "skipped",
+    "attempt": 1,
+    "message": "PR comment deferred until report images are published",
+    "timestamp": "2026-07-19T17:03:30.969Z"
+  }
+]

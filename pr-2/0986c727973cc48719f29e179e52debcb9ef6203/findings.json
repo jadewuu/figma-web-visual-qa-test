@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "severity": "P1",
+    "source": "visual",
+    "location": "Rewards and Coupon tab bar",
+    "description": "The width ratio of Rewards tab to Coupon tab is inconsistent; Rewards tab should be proportionally wider than Coupon tab as per design.",
+    "bbox": [
+      54,
+      685,
+      944,
+      729
+    ]
+  },
+  {
+    "id": 2,
+    "severity": "P2",
+    "source": "visual",
+    "location": "Vertical spacing between How it works section and Rewards tab",
+    "description": "Vertical spacing is smaller than design; insufficient space between the How it works section and Rewards tab bar.",
+    "bbox": [
+      54,
+      655,
+      944,
+      686
+    ]
+  }
+]
