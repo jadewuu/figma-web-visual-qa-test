@@ -2,8 +2,8 @@ targets:
   - id: rewards-self-service-home
     figma:
       fileKey: qYKbCc5BA6JAF74O8563w5
-      nodeId: "5:625"
-    previewUrl: https://jadewuu.github.io/GreenBite/
+      nodeId: "69:1047"
+    previewUrl: https://jadewuu.github.io/GreenBite/#/rewards
     viewport:
       width: 402
       height: 874
