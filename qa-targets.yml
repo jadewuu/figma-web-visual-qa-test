@@ -8,7 +8,7 @@ targets:
       width: 402
       height: 874
       deviceScaleFactor: 1
-    readinessSelector: body
+    readinessSelector: "[data-demo-missing]"
     tokenSource:
       kind: figma
     sourceGlobs:
